@@ -16,6 +16,12 @@ import { accessGate }  from './middleware/accessGate';
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// Render (and the Vercel rewrite in front of it) sit in front of this app as
+// a reverse proxy. Without this, req.ip resolves to the proxy's own address
+// for every request instead of the real visitor IP, breaking anything that
+// rate-limits or logs by IP (e.g. the demo-request endpoint).
+app.set('trust proxy', true);
+
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
   .split(',')
   .map(o => o.trim());
