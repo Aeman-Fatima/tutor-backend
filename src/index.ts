@@ -10,6 +10,7 @@ import historyRouter   from './routes/history';
 import srsRouter       from './routes/srs';
 import ocrRouter       from './routes/ocr';
 import progressRouter  from './routes/progress';
+import demoRequestRouter from './routes/demoRequest';
 import { accessGate }  from './middleware/accessGate';
 
 const app  = express();
@@ -23,6 +24,9 @@ app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// Public — lets visitors without an access code request a demo.
+app.use('/api/demo-request', demoRequestRouter);
 
 app.use(accessGate);
 
