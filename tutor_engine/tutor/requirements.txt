@@ -4,7 +4,12 @@ datasets
 python-dotenv
 psycopg2-binary
 sympy
-sentence-transformers
-transformers
 Pillow
 numpy
+
+# sentence-transformers + transformers (torch) intentionally omitted here:
+# they're the semantic-similarity scoring step in core/verify.py, which
+# already degrades gracefully (try/except ImportError) when unavailable.
+# Installing torch pushed this container over the free-tier 512MB RAM limit
+# and crashed the whole process. Re-add them if/when deployed on a host
+# with more memory.
