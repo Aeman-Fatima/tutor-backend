@@ -12,6 +12,11 @@ if (GMAIL_USER && GMAIL_PASS) {
   transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+    // Fail fast instead of hanging the request forever if the host's
+    // network blocks/filters outbound SMTP (common on free PaaS tiers).
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   });
 }
 
