@@ -1,0 +1,10 @@
+anthropic
+google-genai
+datasets
+python-dotenv
+psycopg2-binary
+sympy
+sentence-transformers
+transformers
+Pillow
+numpy

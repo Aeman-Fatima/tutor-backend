@@ -6,32 +6,48 @@ const router = Router();
 
 /**
  * POST /api/attempt
- * Body: {
- *   student_id:      string,
- *   problem_index:   number,
- *   student_attempt: string,
- *   conversation?:   [{ student_attempt, strategy, response }, ...]  ← optional, pass [] or omit for first turn
- * }
+ *
+ * GSM8K problem body:
+ *   { student_id, problem_index, student_attempt, conversation?, method? }
+ *
+ * Custom problem body (Change B):
+ *   { student_id, custom_problem, student_attempt, conversation?, method? }
  */
 router.post('/', async (req: Request, res: Response) => {
-  const { student_id, problem_index, student_attempt, conversation } = req.body as {
+  const {
+    student_id,
+    problem_index,
+    custom_problem,
+    student_attempt,
+    conversation,
+    method,
+  } = req.body as {
     student_id?: string;
     problem_index?: number;
+    custom_problem?: string;
     student_attempt?: string;
     conversation?: { student_attempt: string; strategy: string; response: string }[];
+    method?: string;
   };
 
-  if (!student_id || problem_index === undefined || !student_attempt) {
-    res.status(400).json({ error: 'student_id, problem_index, and student_attempt are required' });
+  if (!student_id || (problem_index === undefined && !custom_problem) || !student_attempt) {
+    res.status(400).json({
+      error: 'student_id, student_attempt, and either problem_index or custom_problem are required',
+    });
     return;
   }
+
+  const isCustom = !!custom_problem;
 
   try {
     const result = await callPipeline({
       student_id,
-      problem_index,
+      ...(isCustom
+        ? { custom_problem }
+        : { problem_index }),
       student_attempt,
       conversation: conversation ?? [],
+      method: method || undefined,
     });
 
     if (!result.ok) {
@@ -39,8 +55,8 @@ router.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    // Mirror into Postgres — skip DB writes for follow-up responses (SRS not updated).
-    if (!result.srs_skipped) {
+    // Mirror into Postgres — skip for follow-ups and for custom problems (no SRS card).
+    if (!result.srs_skipped && !isCustom) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -56,10 +72,10 @@ router.post('/', async (req: Request, res: Response) => {
           `INSERT INTO srs_cards (student_id, problem_index, interval, ease_factor, repetitions, due_date)
            VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (student_id, problem_index) DO UPDATE SET
-             interval = EXCLUDED.interval,
-             ease_factor = EXCLUDED.ease_factor,
-             repetitions = EXCLUDED.repetitions,
-             due_date = EXCLUDED.due_date`,
+             interval     = EXCLUDED.interval,
+             ease_factor  = EXCLUDED.ease_factor,
+             repetitions  = EXCLUDED.repetitions,
+             due_date     = EXCLUDED.due_date`,
           [student_id, problem_index, interval, ease_factor, repetitions, due_date]
         );
 

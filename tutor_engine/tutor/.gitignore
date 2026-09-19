@@ -1,0 +1,16 @@
+/.env
+__pycache__/
+*.py[cod]
+*$py.class
+progress.db
+*.db
+*.sqlite3
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db

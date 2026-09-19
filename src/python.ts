@@ -1,8 +1,6 @@
 /**
  * Calls the Python pipeline via cli_wrapper.py.
  * Spawns a child process, writes JSON to its stdin, reads JSON from stdout.
- *
- * ASSUMPTION: TUTOR_ROOT and PYTHON_PATH are set in backend/.env
  */
 
 import { spawn } from 'child_process';
@@ -11,7 +9,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const TUTOR_ROOT = process.env.TUTOR_ROOT;
+const TUTOR_ROOT  = process.env.TUTOR_ROOT;
 const PYTHON_PATH = process.env.PYTHON_PATH || 'python3';
 
 if (!TUTOR_ROOT) {
@@ -26,9 +24,11 @@ export interface ConversationEntry {
 
 export interface PipelineRequest {
   student_id: string;
-  problem_index: number;
+  problem_index?: number;    // GSM8K index; omit for custom problems (Change B)
+  custom_problem?: string;   // Change B: free-text problem supplied by the student
   student_attempt: string;
   conversation?: ConversationEntry[];
+  method?: string;           // Change C: optional solution method
 }
 
 export interface SrsCard {
@@ -47,6 +47,7 @@ export interface PipelineResult {
   response: string;
   srs_card: SrsCard;
   srs_skipped?: boolean;
+  topic?: string;
 }
 
 export interface PipelineError {
